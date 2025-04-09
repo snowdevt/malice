@@ -9,15 +9,16 @@ local UserInputService = game:GetService("UserInputService")
 local consoleOutput = {}
 local consoleEnabled = false
 local consoleGui = nil
+local consoleHidden = false
 local debounceTable = {}
 
 -- === UI Creation ===
 function Malice.CreateButton(parent, text, size, position, color)
     local button = Instance.new("TextButton")
-    button.Parent = parent or game.StarterGui:FindFirstChild("ScreenGui") or Instance.new("ScreenGui", game.StarterGui)
+    button.Parent = parent
     button.Text = text or "Button"
-    button.Size = size or UDim2.new(0.2, 0, 0.1, 0)
-    button.Position = position or UDim2.new(0.5, -50, 0.5, -25)
+    button.Size = size or UDim2.new(0.25, 0, 0.1, 0)
+    button.Position = position or UDim2.new(0, 0, 0, 0)
     button.BackgroundColor3 = color or Color3.fromRGB(50, 150, 255)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Font = Enum.Font.SourceSansBold
@@ -41,8 +42,8 @@ function Malice.CreateLabel(parent, text, size, position, color)
     local label = Instance.new("TextLabel")
     label.Parent = parent
     label.Text = text or "Label"
-    label.Size = size or UDim2.new(0.2, 0, 0.05, 0)
-    label.Position = position or UDim2.new(0.5, -50, 0.3, -15)
+    label.Size = size or UDim2.new(0.25, 0, 0.05, 0)
+    label.Position = position or UDim2.new(0, 0, 0, 0)
     label.BackgroundColor3 = color or Color3.fromRGB(80, 80, 80)
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.Font = Enum.Font.SourceSans
@@ -54,8 +55,8 @@ end
 function Malice.CreateDropdown(parent, options, size, position, color)
     local frame = Instance.new("Frame")
     frame.Parent = parent
-    frame.Size = size or UDim2.new(0.2, 0, 0.1, 0)
-    frame.Position = position or UDim2.new(0.5, -50, 0.5, -25)
+    frame.Size = size or UDim2.new(0.25, 0, 0.1, 0)
+    frame.Position = position or UDim2.new(0, 0, 0, 0)
     frame.BackgroundColor3 = color or Color3.fromRGB(50, 150, 255)
     frame.ClipsDescendants = true
 
@@ -108,8 +109,8 @@ function Malice.CreateTextbox(parent, placeholder, size, position, color)
     local textbox = Instance.new("TextBox")
     textbox.Parent = parent
     textbox.PlaceholderText = placeholder or "Enter text..."
-    textbox.Size = size or UDim2.new(0.2, 0, 0.1, 0)
-    textbox.Position = position or UDim2.new(0.5, -50, 0.5, -25)
+    textbox.Size = size or UDim2.new(0.25, 0, 0.1, 0)
+    textbox.Position = position or UDim2.new(0, 0, 0, 0)
     textbox.BackgroundColor3 = color or Color3.fromRGB(50, 150, 255)
     textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
     textbox.Font = Enum.Font.SourceSans
@@ -127,8 +128,8 @@ end
 function Malice.CreateToggle(parent, text, size, position, color)
     local frame = Instance.new("Frame")
     frame.Parent = parent
-    frame.Size = size or UDim2.new(0.2, 0, 0.1, 0)
-    frame.Position = position or UDim2.new(0.5, -50, 0.5, -25)
+    frame.Size = size or UDim2.new(0.25, 0, 0.1, 0)
+    frame.Position = position or UDim2.new(0, 0, 0, 0)
     frame.BackgroundColor3 = color or Color3.fromRGB(50, 150, 255)
 
     local label = Instance.new("TextLabel")
@@ -160,8 +161,8 @@ end
 function Malice.CreateSlider(parent, min, max, default, size, position, color)
     local frame = Instance.new("Frame")
     frame.Parent = parent
-    frame.Size = size or UDim2.new(0.2, 0, 0.05, 0)
-    frame.Position = position or UDim2.new(0.5, -50, 0.5, -25)
+    frame.Size = size or UDim2.new(0.25, 0, 0.05, 0)
+    frame.Position = position or UDim2.new(0, 0, 0, 0)
     frame.BackgroundColor3 = color or Color3.fromRGB(50, 150, 255)
 
     local slider = Instance.new("TextButton")
@@ -208,10 +209,42 @@ end
 
 function Malice.CreateFrame(parent, size, position, color)
     local frame = Instance.new("Frame")
-    frame.Parent = parent or game.StarterGui:FindFirstChild("ScreenGui") or Instance.new("ScreenGui", game.StarterGui)
-    frame.Size = size or UDim2.new(0.5, 0, 0.4, 0)
-    frame.Position = position or UDim2.new(0.5, -100, 0.5, -75)
+    frame.Parent = parent
+    frame.Size = size or UDim2.new(0.8, 0, 0.8, 0) -- Larger default size
+    frame.Position = position or UDim2.new(0.1, 0, 0.1, 0)
     frame.BackgroundColor3 = color or Color3.fromRGB(30, 30, 30)
+
+    -- Custom drag system
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            if dragging then
+                local delta = input.Position - dragStart
+                frame.Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                )
+            end
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
     return frame
 end
 
@@ -271,7 +304,7 @@ function Malice.Log(message, level)
     local entry = {Level = level, Message = tostring(message), Time = os.time()}
     table.insert(consoleOutput, entry)
     print(string.format("[Malice %s] %s", level, message))
-    if consoleEnabled and consoleGui then
+    if consoleEnabled and consoleGui and not consoleHidden then
         Malice.UpdateConsoleGui()
     end
 end
@@ -291,6 +324,7 @@ function Malice.ToggleConsole(parent)
         if consoleGui then consoleGui:Destroy() end
         consoleGui = nil
         consoleEnabled = false
+        consoleHidden = false
         return
     end
 
@@ -299,15 +333,21 @@ function Malice.ToggleConsole(parent)
     consoleGui.Parent = parent or game.Players.LocalPlayer:WaitForChild("PlayerGui")
     consoleGui.Name = "MaliceConsole"
 
-    local frame = Malice.CreateFrame(consoleGui, UDim2.new(0.7, 0, 0.3, 0), UDim2.new(0, 10, 0, 10))
+    local frame = Malice.CreateFrame(consoleGui, UDim2.new(0.6, 0, 0.5, 0), UDim2.new(0, 10, 0, 10))
     frame.Name = "ConsoleFrame"
-    frame.Draggable = true
-    frame.Active = true
+
+    local hideButton = Malice.CreateButton(frame, "Hide", UDim2.new(0.15, 0, 0.05, 0), UDim2.new(0.85, -30, 0, 5), Color3.fromRGB(255, 100, 100))
+    hideButton.MouseButton1Click:Connect(function()
+        consoleHidden = not consoleHidden
+        frame.Visible = not consoleHidden
+        hideButton.Text = consoleHidden and "Show" or "Hide"
+        Malice.Log("Console " .. (consoleHidden and "hidden" or "shown"), "Event")
+    end)
 
     local textBox = Instance.new("TextBox")
     textBox.Parent = frame
-    textBox.Size = UDim2.new(1, -10, 1, -10)
-    textBox.Position = UDim2.new(0, 5, 0, 5)
+    textBox.Size = UDim2.new(1, -10, 0.95, -10)
+    textBox.Position = UDim2.new(0, 5, 0.05, 5)
     textBox.BackgroundTransparency = 1
     textBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     textBox.Font = Enum.Font.Code
@@ -323,7 +363,7 @@ function Malice.ToggleConsole(parent)
 end
 
 function Malice.UpdateConsoleGui()
-    if not consoleGui or not consoleEnabled then return end
+    if not consoleGui or not consoleEnabled or consoleHidden then return end
     local textBox = consoleGui.ConsoleFrame:FindFirstChild("TextBox")
     if not textBox then return end
     local text = ""
@@ -335,6 +375,6 @@ function Malice.UpdateConsoleGui()
 end
 
 -- Initialization
-Malice.Log("Malice Library Loaded with Mobile Support", "Info")
+Malice.Log("Malice Library Loaded with Improved Mobile Dragging", "Info")
 
 return Malice
